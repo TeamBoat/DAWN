@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "ENS160-BGLM")(type "KiCad")(uri "/Users/kenhuang/Downloads/ENS160_BGLM/ENS160-BGLM.kicad_sym")(options "")(descr ""))
+)
