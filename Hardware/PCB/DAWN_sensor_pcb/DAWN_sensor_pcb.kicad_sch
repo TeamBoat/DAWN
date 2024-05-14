@@ -1615,6 +1615,25 @@
 		)
 		(uuid "f86a2acb-0379-495c-abfb-3ff0655ad072")
 	)
+	(text_box "Sensor PCB\n"
+		(exclude_from_sim no)
+		(at 59.055 53.975 0)
+		(size 182.88 75.565)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "dc94c045-eb39-4f4e-ba1a-4c4c42183369")
+	)
 	(text "I2C Protocol "
 		(exclude_from_sim no)
 		(at 220.472 69.088 0)
