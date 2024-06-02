@@ -118,37 +118,29 @@ void loop() {
 
   //display information on LCD
   lcd.setCursor(0, 0); // Set the cursor to column 0, line 1
-  lcd.print("Air Quality Index:");
-  lcd.setCursor(18, 0);
-  lcd.print((uint8_t)ens160.getAirQualityIndex_UBA());
+  lcd.print("AQI: " + String((uint8_t)ens160.getAirQualityIndex_UBA()));
+  // lcd.setCursor(18, 0);
+  // lcd.print((uint8_t)ens160.getAirQualityIndex_UBA());
 
   lcd.setCursor(0, 1); // Set the cursor to column 0, line 1
-  lcd.print("Temperature");
-  lcd.setCursor(13, 1);
-  lcd.print(bme.readTemperature());
-  lcd.setCursor(18, 1);
-  lcd.print("°C");
+  lcd.print("Temp.: " + String(bme.readTemperature()) + (char)223 + "C");
+  // lcd.setCursor(13, 1);
+  // lcd.print(bme.readTemperature());
+  // lcd.setCursor(18, 1);
+  // lcd.print("°C");
 
   lcd.setCursor(0, 2); // Set the cursor to column 0, line 1
-  lcd.print("Air Pressure");
-  lcd.setCursor(13, 2);
-  lcd.print(bme.readPressure()/ 100.0F);
+  lcd.print("Air Pres.: " + String(bme.readPressure()/ 100.0F) + "hPa");
+  // lcd.setCursor(13, 2);
+  // lcd.print(bme.readPressure()/ 100.0F);
 
   lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
-  lcd.print("Humidity");
-  lcd.setCursor(13, 3);
-  lcd.print(bme.readHumidity());
-  lcd.setCursor(18, 3);
-  lcd.print(" %");
+  lcd.print("Humidity: "+String(bme.readHumidity())+"%");
 
   printValues();
 
 
-
-
-
-
-  delay(1000);
+  delay(delayTime);
 
 }
 
