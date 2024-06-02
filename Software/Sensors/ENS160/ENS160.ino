@@ -9,6 +9,9 @@ using namespace ScioSense;
 #define I2C_ADDRESS 0x52
 I2cInterface i2c;
 
+#define SDA_PIN 21
+#define SCL_PIN 19
+
 #define USE_INTERRUPT
 #define INTN 2
 
@@ -19,7 +22,7 @@ void setup()
     Serial.begin(9600);
     ens160.enableDebugging(Serial);
 
-    Wire.begin();
+    Wire.begin(SDA_PIN, SCL_PIN);
     i2c.begin(Wire, I2C_ADDRESS);
 
     Serial.println("begin..");
