@@ -21,6 +21,8 @@ I2cInterface i2c;
 #define USE_INTERRUPT
 #define INTN 2
 
+#define BUZZER_PIN 26
+
 // object ens160
 ENS160 ens160; 
 
@@ -34,6 +36,7 @@ unsigned long delayTime;
 
 
 void setup() {
+  pinMode(BUZZER_PIN, OUTPUT);
   // begin serial
   Serial.begin(9600);
 
@@ -114,6 +117,12 @@ void loop() {
       Serial.print("\tRS3:"); Serial.println(ens160.getRs3());
     }  
 
+  }
+  if (bme.readHumidity() > 50.0) {
+    analogWrite(BUZZER_PIN, HIGH);
+  }
+  else {
+    analogWrite(BUZZER_PIN, LOW);
   }
 
   //display information on LCD

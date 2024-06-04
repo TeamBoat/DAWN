@@ -19,10 +19,36 @@ void setup() {
   lcd.backlight();
 
   // Print a message to the LCD
-  lcd.setCursor(0, 0); // Set the cursor to column 0, line 1
-  lcd.print("Hello, World!");
+ lcd.setCursor(0, 0); // Set the cursor to column 0, line 1
+  lcd.print("AQI: 2");
+
+  lcd.setCursor(0, 1); // Set the cursor to column 0, line 1
+  lcd.print("Temp.: 27.54 C");
+
+  lcd.setCursor(0, 2); // Set the cursor to column 0, line 1
+  lcd.print("Air Pres.: 998.92hPa");
+
+  lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
+  lcd.print("Humidity: 34.78%");
 }
 
 void loop() {
-  // No need to repeat anything in the loop for a basic display
+    // Initialize the LCD
+  lcd.init();
+  
+  // Turn on the backlight
+  lcd.backlight();
+
+  lcd.setCursor(0, 0); // Set the cursor to column 0, line 1
+  lcd.print("AQI: 2");
+
+  lcd.setCursor(0, 1); // Set the cursor to column 0, line 1
+  lcd.print("Temp.: 27.54 C");
+
+  lcd.setCursor(0, 2); // Set the cursor to column 0, line 1
+  lcd.print("Air Pres.: 998.92hPa");
+
+  lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
+  lcd.print("Humidity: 34.78%");
+  delay(1000);
 }
