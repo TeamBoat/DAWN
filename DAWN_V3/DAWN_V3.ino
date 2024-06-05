@@ -69,6 +69,10 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);  // Adjust the address (0x27) if necessary
 
 unsigned long delayTime;
 
+//timer loop 
+unsigned long previousMillis = 0; // Store the last time the sensor values were printed
+const long interval = 1000; // Interval at which to print (milliseconds)
+
 
 void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
@@ -92,6 +96,7 @@ void setup() {
   RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
 
   // Initialize I2C with the chosen pins
+  Wire.begin(SDA_PIN, SCL_PIN);
   Wire1.begin(SDA_PIN, SCL_PIN);
   i2c.begin(Wire1, I2C_ADDRESS);
 
@@ -119,40 +124,44 @@ void setup() {
 
 
   //////////////////////////////////////////////////////////////// BME 280 Setup
-  // while(!Serial);    // time to get serial running
-  // Serial.println(F("BME280 test"));
+  while(!Serial);    // time to get serial running
+  Serial.println(F("BME280 test"));
 
-  // unsigned status;
+  unsigned status;
     
-  // // default settings
-  // status = bme.begin(0x76); 
+  // default settings
+  status = bme.begin(0x76, &Wire1); 
 
-  // if (!status) {
-  //   Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-  //   Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
-  //   Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-  //   Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
-  //   Serial.print("        ID of 0x60 represents a BME 280.\n");
-  //   Serial.print("        ID of 0x61 represents a BME 680.\n");
-  //   while (1) delay(10);
-  // }
+  if (!status) {
+    Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+    Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
+    Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+    Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
+    Serial.print("        ID of 0x60 represents a BME 280.\n");
+    Serial.print("        ID of 0x61 represents a BME 680.\n");
+    while (1) delay(10);
+  }
     
-  // Serial.println("-- Default Test --");
-  // delayTime = 1000;
+  Serial.println("-- Default Test --");
+  delayTime = 1000;
 
-  // Serial.println();
+  Serial.println();
 
   //////////////////////////////////////////////////////////////// Initialize the LCD
   lcd.init();
   lcd.backlight();  // Turn on the backlight
   
 }
-long test;
+
+long test1;
+float test2; 
+float test3;
+float test4;
 
 void loop() {
   ens160.wait();
 
-  // Enable Tools->Serial Plotter to see the sensor output as a graph
+  // // Enable Tools->Serial Plotter to see the sensor output as a graph
 
   if (ens160.update() == ENS16x::Result::Ok)
   {
@@ -170,36 +179,35 @@ void loop() {
     // }  
 
   }
-  test = (uint8_t)ens160.getAirQualityIndex_UBA();
-  // Serial.print(test);
-  // if (bme.readHumidity() > 50.0) {
-  //   digitalWrite(BUZZER_PIN, HIGH);
-  // }
-  // else {
-  //   digitalWrite(BUZZER_PIN, LOW);
-  // }
+  test1 = (uint8_t)ens160.getAirQualityIndex_UBA();
+  test2 = (float)bme.readTemperature();
+  test3 = (float)bme.readPressure() / 100.0F;
+  test4 = (float)bme.readHumidity();
 
-  //display information on LCD
+  String result_test = String(test1) + ", " + String(test2) + ", " + String(test3) + ", " + String(test4);
+  
+  // Serial.print(result_test);
+
+  if (bme.readHumidity() > 50.0) {
+    digitalWrite(BUZZER_PIN, HIGH);
+  }
+  else {
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+
+  // display information on LCD
   lcd.setCursor(0, 0); // Set the cursor to column 0, line 1
   lcd.print("AQI: " + String((uint8_t)ens160.getAirQualityIndex_UBA()));
 
-  // lcd.setCursor(18, 0);
-  // lcd.print((uint8_t)ens160.getAirQualityIndex_UBA());
+  lcd.setCursor(0, 1); // Set the cursor to column 0, line 1
+  lcd.print("Temp.: " + String(bme.readTemperature()) + (char)223 + "C");
 
-  // lcd.setCursor(0, 1); // Set the cursor to column 0, line 1
-  // lcd.print("Temp.: " + String(bme.readTemperature()) + (char)223 + "C");
-  // // lcd.setCursor(13, 1);
-  // // lcd.print(bme.readTemperature());
-  // // lcd.setCursor(18, 1);
-  // // lcd.print("°C");
+  lcd.setCursor(0, 2); // Set the cursor to column 0, line 1
+  lcd.print("Air Pres.: " + String(bme.readPressure()/ 100.0F) + "hPa");
 
-  // lcd.setCursor(0, 2); // Set the cursor to column 0, line 1
-  // lcd.print("Air Pres.: " + String(bme.readPressure()/ 100.0F) + "hPa");
-  // // lcd.setCursor(13, 2);
-  // // lcd.print(bme.readPressure()/ 100.0F);
 
-  // lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
-  // lcd.print("Humidity: "+String(bme.readHumidity())+"%");
+  lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
+  lcd.print("Humidity: "+String(bme.readHumidity())+"%");
 
   heltec_loop();
   
@@ -215,7 +223,7 @@ void loop() {
     radio.clearDio1Action();
     heltec_led(50); // 50% brightness is plenty for this LED
     tx_time = millis();
-    RADIOLIB(radio.transmit(String(test).c_str()));
+    RADIOLIB(radio.transmit(String(result_test).c_str()));
     tx_time = millis() - tx_time;
     heltec_led(0);
     if (_radiolib_status == RADIOLIB_ERR_NONE) {
@@ -242,32 +250,38 @@ void loop() {
     RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
   }
 
-  // printValues();
+  printValues();
 
 
-  delay(delayTime);
+  // delay(delayTime);
 
 }
 
-// void printValues() {
-//     Serial.print("Temperature = ");
-//     Serial.print(bme.readTemperature());
-//     Serial.println(" °C");
+void printValues() {
+  unsigned long currentMillis = millis();
 
-//     Serial.print("Pressure = ");
-//     Serial.print(bme.readPressure() / 100.0F);
-//     Serial.println(" hPa");
+  if (currentMillis - previousMillis >= interval) {
+    // Save the last time you printed the sensor values
+    previousMillis = currentMillis;
+    Serial.print("Temperature = ");
+    Serial.print(bme.readTemperature());
+    Serial.println(" °C");
+
+    Serial.print("Pressure = ");
+    Serial.print(bme.readPressure() / 100.0F);
+    Serial.println(" hPa");
 
 //     Serial.print("Approx. Altitude = ");
 //     Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
 //     Serial.println(" m");
 
-//     Serial.print("Humidity = ");
-//     Serial.print(bme.readHumidity());
-//     Serial.println(" %");
+    Serial.print("Humidity = ");
+    Serial.print(bme.readHumidity());
+    Serial.println(" %");
 
-//     Serial.println();
-// }
+    Serial.println();
+  }
+}
 
 void rx() {
   rxFlag = true;
