@@ -5,6 +5,9 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
+#define HELTEC_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
+#include <heltec_unofficial.h>
+
 #include "ens16x_i2c_interface.h"
 
 using namespace ScioSense;
@@ -15,13 +18,45 @@ using namespace ScioSense;
 I2cInterface i2c;
 
 // I2C PINOUT
-#define SDA_PIN 21
-#define SCL_PIN 19
+#define SDA_PIN 33
+#define SCL_PIN 34
 
 #define USE_INTERRUPT
 #define INTN 2
 
 #define BUZZER_PIN 26
+
+// Pause between transmited packets in seconds.
+// Set to zero to only transmit a packet when pressing the user button
+// Will not exceed 1% duty cycle, even if you set a lower value.
+#define PAUSE               300
+
+// Frequency in MHz. Keep the decimal point to designate float.
+// Check your own rules and regulations to see what is legal where you are.
+// #define FREQUENCY           866.3       // for Europe
+#define FREQUENCY           905.2       // for US
+
+// LoRa bandwidth. Keep the decimal point to designate float.
+// Allowed values are 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0 and 500.0 kHz.
+#define BANDWIDTH           250.0
+
+// Number from 5 to 12. Higher means slower but higher "processor gain",
+// meaning (in nutshell) longer range and more robust against interference. 
+#define SPREADING_FACTOR    9
+
+// Transmit power in dBm. 0 dBm = 1 mW, enough for tabletop-testing. This value can be
+// set anywhere between -9 dBm (0.125 mW) to 22 dBm (158 mW). Note that the maximum ERP
+// (which is what your antenna maximally radiates) on the EU ISM band is 25 mW, and that
+// transmissting without an antenna can damage your hardware.
+#define TRANSMIT_POWER      0
+
+String rxdata;
+volatile bool rxFlag = false;
+long counter = 0;
+uint64_t last_tx = 0;
+uint64_t tx_time;
+uint64_t minimum_pause;
+
 
 // object ens160
 ENS160 ens160; 
@@ -37,8 +72,8 @@ unsigned long delayTime;
 
 void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
-  // begin serial
   Serial.begin(9600);
+
 
   // Initialize I2C with the chosen pins
   Wire.begin(SDA_PIN, SCL_PIN);
@@ -119,10 +154,10 @@ void loop() {
 
   }
   if (bme.readHumidity() > 50.0) {
-    analogWrite(BUZZER_PIN, HIGH);
+    digitalWrite(BUZZER_PIN, HIGH);
   }
   else {
-    analogWrite(BUZZER_PIN, LOW);
+    digitalWrite(BUZZER_PIN, LOW);
   }
 
   //display information on LCD
@@ -145,6 +180,7 @@ void loop() {
 
   lcd.setCursor(0, 3); // Set the cursor to column 0, line 1
   lcd.print("Humidity: "+String(bme.readHumidity())+"%");
+
 
   printValues();
 
@@ -172,3 +208,4 @@ void printValues() {
 
     Serial.println();
 }
+
