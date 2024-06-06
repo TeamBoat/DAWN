@@ -7,7 +7,10 @@
  *
  * This works on the stick, but the output on the screen gets cut off.
 */
-
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#define SDA_PIN 33
+#define SCL_PIN 34
 
 
 // Turns the 'PRG' button into the power button, long press is off 
@@ -38,6 +41,8 @@
 // transmissting without an antenna can damage your hardware.
 #define TRANSMIT_POWER      0
 
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+
 String rxdata;
 volatile bool rxFlag = false;
 long counter = 0;
@@ -46,6 +51,12 @@ uint64_t tx_time;
 uint64_t minimum_pause;
 
 void setup() {
+  Wire.begin(SDA_PIN, SCL_PIN);
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("p");
+ 
   heltec_setup();
   both.println("Radio init");
   RADIOLIB_OR_HALT(radio.begin());
@@ -62,11 +73,14 @@ void setup() {
   RADIOLIB_OR_HALT(radio.setOutputPower(TRANSMIT_POWER));
   // Start receiving
   RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
+
+
 }
 
 void loop() {
   heltec_loop();
-  
+
+
   bool tx_legal = millis() > last_tx + minimum_pause;
   // Transmit a packet every PAUSE seconds or when the button is pressed
   if ((PAUSE && tx_legal && millis() - last_tx > (PAUSE * 1000)) || button.isSingleClick()) {
@@ -99,6 +113,19 @@ void loop() {
     rxFlag = false;
     radio.readData(rxdata);
     if (_radiolib_status == RADIOLIB_ERR_NONE) {
+      lcd.setCursor(0, 1);
+      String parsedStrings[10]; // Adjust the size according to your needs
+      int arraySize = sizeof(parsedStrings) / sizeof(parsedStrings[0]);
+      
+      parseString(rxdata, ", ", parsedStrings, arraySize);
+      lcd.print("Temp: " + parsedStrings[1] + "C");
+      lcd.setCursor(0, 2);
+      lcd.print("Air pres: " + parsedStrings[2] + "hPa");
+      lcd.setCursor(0, 3);
+      lcd.print("Humidity: " + parsedStrings[3] + "%");
+      lcd.setCursor(0, 0);
+      lcd.print("AQI: " + parsedStrings[0]);
+
       both.printf("RX [%s]\n", rxdata.c_str());
       both.printf("  RSSI: %.2f dBm\n", radio.getRSSI());
       both.printf("  SNR: %.2f dB\n", radio.getSNR());
@@ -110,4 +137,23 @@ void loop() {
 // Can't do Serial or display things here, takes too much time for the interrupt
 void rx() {
   rxFlag = true;
+}
+
+
+
+// Function to split the string and store in the array
+void parseString(String str, String delimiter, String resultArray[], int maxArraySize) {
+  int startIndex = 0;
+  int endIndex = 0;
+  int arrayIndex = 0;
+
+  while ((endIndex = str.indexOf(delimiter, startIndex)) != -1 && arrayIndex < maxArraySize) {
+    resultArray[arrayIndex++] = str.substring(startIndex, endIndex);
+    startIndex = endIndex + delimiter.length();
+  }
+  
+  // Add the last segment
+  if (arrayIndex < maxArraySize) {
+    resultArray[arrayIndex] = str.substring(startIndex);
+  }
 }
